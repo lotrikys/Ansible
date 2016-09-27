@@ -1,0 +1,42 @@
+---
+
+- name: Add the OS specific varibles
+  include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Install php5.6 repo for Ubuntu
+  apt_repository: repo='ppa:ondrej/php'
+  when:
+      - ansible_distribution == "Ubuntu"
+
+- name: Install the php packages for Ubuntu (APT)
+  apt: >
+    name={{ item }}
+    state=present
+    update_cache=yes
+    cache_valid_time={{ apt_cache_valid_time }}
+  with_items: "{{ php_apt_packages }}"
+  environment: "{{ env }}"
+  when:
+      - ansible_distribution == "Ubuntu"
+
+- name: Install new php repo CentOS 6
+  yum: name=https://mirror.webtatic.com/yum/el6/latest.rpm state=present
+  when:
+      - ansible_distribution == "CentOS"
+      - ansible_distribution_major_version == "6"
+
+- name: Install new php repo CentOS 7
+  yum: name=https://mirror.webtatic.com/yum/el7/webtatic-release.rpm state=present
+  when:
+      - ansible_distribution == "CentOS"
+      - ansible_distribution_major_version == "7"
+
+- name: Install the php packages (YUM)
+  yum: name={{ item }} state=present
+  with_items: "{{ php_yum_packages }}"
+  environment: "{{ env }}"
+  when: ansible_distribution == "CentOS"
+
+- name: Copy default PHP configuration file
+  template: dest={{ item }} src=php.ini.j2
+  with_items: "{{ php_ini_path }}"

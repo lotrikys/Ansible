@@ -1,0 +1,35 @@
+#{{ ansible_managed }}
+{% if ansible_os_family == 'RedHat' %} 
+user              nobody;
+{% endif %}
+{% if ansible_os_family == 'Debian' %} 
+user              nobody	nogroup;
+{% endif %}
+
+worker_processes  {{ ansible_processor_count }};
+
+error_log /var/log/nginx.error.log;
+pid /var/run/nginx.pid;
+events {
+        worker_connections 8096;
+        use epoll;
+}
+http {
+        server_tokens off;
+        log_not_found off;
+        include mime.types;
+        default_type  application/octet-stream;
+        access_log off;
+        #access_log /usr/home/logs/nginx.access.log;
+        sendfile on;
+        #tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 25;
+        connection_pool_size 2k;
+        request_pool_size 4k;
+        output_buffers 10 64k;
+        client_max_body_size 512M;
+        #gzip  on;
+        reset_timedout_connection on;
+	include /etc/nginx/sites-enabled/*;
+}

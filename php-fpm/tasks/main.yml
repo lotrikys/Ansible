@@ -1,0 +1,85 @@
+---
+
+- name: Add the OS specific varibles
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Install php5.6 repo for Ubuntu
+  apt_repository: repo='ppa:ondrej/php'
+  when:
+      - ansible_distribution == "Ubuntu"
+
+- name: Install the php packages for Ubuntu (APT)
+  apt: >
+    name={{ item }}
+    state=present
+    update_cache=yes
+    cache_valid_time={{ apt_cache_valid_time }}
+  with_items: "{{ php_fpm_apt_packages }}"
+  environment: "{{ env }}"
+  when:
+      - ansible_distribution == "Ubuntu"
+  notify:
+     - restart php-fpm
+  tags: [packages,php,fpm]
+
+- name: Install new php repo CentOS 6
+  yum: name=https://mirror.webtatic.com/yum/el6/latest.rpm state=present
+  when:
+      - ansible_distribution == "CentOS"
+      - ansible_distribution_major_version == "6"
+
+- name: Install new php repo CentOS 7
+  yum: name=https://mirror.webtatic.com/yum/el7/webtatic-release.rpm state=present
+  when:
+      - ansible_distribution == "CentOS"
+      - ansible_distribution_major_version == "7"
+
+- name: Install the php packages (YUM)
+  yum: name={{ item }} state=present
+  with_items: "{{ php_fpm_yum_packages }}"
+  environment: "{{ env }}"
+  when: ansible_os_family == "RedHat"
+  tags: [packages,php,fpm]
+
+- name: Disabling SElinux
+  selinux: policy=targeted state=permissive
+  when: ansible_os_family == "RedHat"
+
+- name: Disabling SElinux permanently
+  selinux: state=disabled
+  when: ansible_os_family == "RedHat"
+
+- name: Copy the PHP configuration file
+  ini_file: >
+    dest={{ php_fpm_ini_path }}
+    section="{{ item.section }}"
+    option="{{ item.option }}"
+    value="{{ item.value }}"
+    backup=yes
+  with_items: "{{ php_fpm_ini }}"
+  notify:
+   - restart php-fpm
+  tags: [configuration,php,fpm]
+
+- name: Copy default FPM configuration file
+  template: dest={{ php_fpm_config_path }} src=php-fpm.conf.j2
+  notify:
+   - restart php-fpm
+  tags: [configuration,php,fpm]
+
+- name: Delete the default POOL configuration file
+  file: >
+    path={{ php_fpm_pool_d }}/{{ php_fpm_default_pool.name }}
+    state=absent
+  when: php_fpm_default_pool.delete
+  tags: [configuration,php,fpm]
+
+- name: Check php-fpm syntax of configuration files
+  shell: "{{ php_fpm_binary_name }} -t"
+  register: result
+  changed_when: "result.rc != 0"
+  tags: [configuration,php,fpm]
+
+- name: Start the php5-fpm service
+  service: name={{ php_fpm_service_name }} state=started enabled=yes
+  tags: [service,php,fpm]

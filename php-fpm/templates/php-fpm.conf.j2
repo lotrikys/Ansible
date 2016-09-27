@@ -1,0 +1,69 @@
+[global]
+#EDIT PATH TO PID
+{% if ansible_os_family == "Debian" %}
+pid = /var/run/php-fpm.pid
+{% endif %}
+{% if ansible_os_family == "RedHat" %}
+pid = /var/run/php-fpm/php-fpm.pid
+{% endif %}
+error_log = /var/log/php5-fpm.log
+log_level = error
+;emergency_restart_threshold = 0
+;emergency_restart_interval = 0
+;process_control_timeout = 0
+;daemonize = yes
+[www]
+;prefix = /path/to/pools/$pool
+;listen = 127.0.0.1:9000
+
+listen = /var/run/php-fpm.sock
+;listen.backlog = -1
+;listen.allowed_clients = 127.0.0.1
+listen.owner = nobody
+{% if ansible_os_family == "Debian" %}
+listen.group = nogroup
+{% endif %}
+{% if ansible_os_family == "RedHat" %}
+listen.group = nobody
+{% endif %}
+listen.mode = 0666
+
+user = nobody
+{% if ansible_os_family == "Debian" %}
+group = nogroup
+{% endif %}
+{% if ansible_os_family == "RedHat" %}
+group = nobody
+{% endif %}
+
+pm = ondemand
+pm.max_children = 1000
+pm.start_servers = 400
+pm.min_spare_servers = 16
+pm.max_spare_servers = 500
+pm.max_requests = 7000
+;pm.status_path = /status
+;ping.path = /ping
+;ping.response = pong
+
+;request_terminate_timeout = 3
+;request_slowlog_timeout = 1
+slowlog = /usr/home/logs/php-fpm-slow.log
+rlimit_files = 10240
+
+;rlimit_core = 0
+;chroot =
+;chdir = /var/www
+;catch_workers_output = yes
+;env[HOSTNAME] = $HOSTNAME
+;env[PATH] = /usr/local/bin:/usr/bin:/bin
+;env[TMP] = /tmp
+;env[TMPDIR] = /tmp
+;env[TEMP] = /tmp
+;php_admin_value[sendmail_path] = /usr/sbin/sendmail -t -i -f www@my.domain.com
+;php_flag[display_errors] = on
+php_admin_value[error_log] = /home/logs/php-fpm_error.log
+php_admin_flag[log_errors] = on
+php_admin_value[error_reporting] = E_ALL & ~E_NOTICE
+php_admin_value[display_errors] = off
+php_admin_flag[display_startup_errors] = off

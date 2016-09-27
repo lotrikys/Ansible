@@ -1,0 +1,4 @@
+---
+php_ini_path: /etc/php.ini
+
+php_binary_name: php
