@@ -1,0 +1,13 @@
+---
+
+apache_apt_packages:
+  - apache2
+
+apache_yum_packages:
+  - httpd
+
+disable_apache_modules:
+  - mpm_event
+
+enable_apache_modules:
+  - php5.6

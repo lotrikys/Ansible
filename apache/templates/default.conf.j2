@@ -1,0 +1,12 @@
+{% if ansible_distribution_version != "16.04" %}
+<VirtualHost {{ ansible_eth1.ipv4.address }}:80>
+{% endif %}
+
+{% if ansible_distribution_version == "16.04" %}
+<VirtualHost {{ ansible_ens4.ipv4.address }}:80>
+{% endif %}
+    ServerName domain.com
+    ServerAlias www.domain.com
+    DocumentRoot /home/ftpaccess/www
+    ScriptAlias /cgi-bin/ /home/ftpaccess/cgi-bin/
+</VirtualHost>

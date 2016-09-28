@@ -1,0 +1,6 @@
+---
+apache_conf_path: /etc/httpd/conf/httpd.conf
+apache_site_config: /etc/httpd/conf.d/default.conf
+apache_welcome_config: /etc/httpd/conf.d/welcome.conf
+
+apache_service_name: httpd

@@ -1,0 +1,71 @@
+---
+
+- name: Add the OS specific varibles
+  include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Install the Apache2 packages for Ubuntu (APT)
+  apt: >
+    name={{ item }}
+    state=present
+    update_cache=yes
+    cache_valid_time={{ apt_cache_valid_time }}
+  with_items: apache_apt_packages
+  environment: "{{ env }}"
+  when: ansible_distribution == "Ubuntu"
+
+- name: Disabling Apache2 modules
+  apache2_module: name={{ item }} state=absent
+  with_items: disable_apache_modules
+  when: ansible_distribution == "Ubuntu"
+
+- name: Enabling Apache2 modules
+  apache2_module: name={{ item }} state=present
+  with_items: enable_apache_modules
+  when: ansible_distribution == "Ubuntu"
+  notify: apache restart
+
+- name: Disabling SElinux
+  selinux: policy=targeted state=permissive
+  when: ansible_distribution == "CentOS"
+
+- name: Disabling SElinux permanently
+  selinux: state=disabled
+  when: ansible_distribution == "CentOS"
+
+- name: Install the Apache2 packages (YUM)
+  yum: name={{ item }} state=present
+  with_items: apache_yum_packages
+  environment: "{{ env }}"
+  when: ansible_distribution == "CentOS"
+
+- name: Create folder for default site
+  file: path=/home/ftpaccess/www state=directory mode=0755
+
+- name: Create default site
+  copy: content="<?php\nphpinfo();\n?>" dest=/home/ftpaccess/www/index.php
+
+- name: Create default configs for Apache2 (Ubuntu)
+  template: src={{ item.src }} dest={{ item.dst }}
+  with_items:
+    - { src: "apache2.conf.j2", dst: "{{ apache_conf_path }}" }
+    - { src: "ports.conf.j2", dst: "{{ apache_ports_conf }}" }
+  when: ansible_distribution == "Ubuntu"
+  notify: apache restart
+
+- name: Create default configs for Apache2 (CentOS)
+  template: src={{ item.src }} dest={{ item.dst }}
+  with_items: 
+    - { src: "httpd.conf.j2", dst: "{{ apache_conf_path }}" }
+    - { src: "welcome.conf.j2", dst: "{{ apache_welcome_config }}" }
+  when: ansible_distribution == "CentOS"
+  when: ansible_distribution_major_version == "7"
+  notify: apache restart
+
+- name: Create default site config
+  template: src={{ item.src }} dest={{ item.dst }}
+  with_items:
+    - { src: "default.conf.j2", dst: "{{ apache_site_config }}" }
+  notify: apache restart
+
+- name: Starting Apache2
+  service: name={{ apache_service_name }} state=started enabled=yes

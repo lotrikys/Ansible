@@ -14,7 +14,7 @@
     state=present
     update_cache=yes
     cache_valid_time={{ apt_cache_valid_time }}
-  with_items: "{{ php_apt_packages }}"
+  with_items: php_apt_packages
   environment: "{{ env }}"
   when:
       - ansible_distribution == "Ubuntu"
@@ -33,10 +33,10 @@
 
 - name: Install the php packages (YUM)
   yum: name={{ item }} state=present
-  with_items: "{{ php_yum_packages }}"
+  with_items: php_yum_packages
   environment: "{{ env }}"
   when: ansible_distribution == "CentOS"
 
 - name: Copy default PHP configuration file
   template: dest={{ item }} src=php.ini.j2
-  with_items: "{{ php_ini_path }}"
+  with_items: php_ini_path

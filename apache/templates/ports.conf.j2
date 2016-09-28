@@ -1,0 +1,14 @@
+{% if ansible_distribution_version == "14.04" %}
+listen {{ ansible_eth1.ipv4.address }}:80
+{% endif %}
+{% if ansible_distribution_version == "16.04" %}
+listen {{ ansible_ens4.ipv4.address }}:80
+{% endif %}
+
+<IfModule ssl_module>
+    Listen 443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+    Listen 443
+</IfModule>
