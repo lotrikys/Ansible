@@ -1,0 +1,33 @@
+server {
+
+{% if nginx_separate_logs_per_site == True %}
+	access_log {{ nginx_log_dir}}/{{ item.server.server_name}}-{{ nginx_access_log_name}};
+	error_log {{ nginx_log_dir}}/{{ item.server.server_name}}-{{ nginx_error_log_name}};
+{% endif %}
+
+{% if ansible_distribution_version != "16.04" %}
+listen {{ ansible_eth1.ipv4.address }}:80;
+{% endif %}
+
+{% if ansible_distribution_version == "16.04" %}
+listen {{ ansible_ens4.ipv4.address }}:80;
+{% endif %}
+
+{% for k,v in item.server.iteritems() %}
+{% if k.find('location') == -1 and k != 'file_name' %}
+{{ k }} {{ v }};
+{% endif %}
+{% endfor %} 
+index index.php index.html;
+include proxy.conf;
+
+{% for k,v in item.server.iteritems() if k.find('location') != -1 %}
+  location {{ v.name }} {
+{% for x,y in v.iteritems() if x != 'name' %} 
+      {{ x }} {{ y }};
+{% endfor %}
+
+  }
+{% endfor %}
+}
+
